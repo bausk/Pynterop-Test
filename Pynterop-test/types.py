@@ -1,26 +1,18 @@
-from math import *
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+    pyautocad.types
+    ~~~~~~~~~~~~~~~
+
+    3D Points and and other AutoCAD data types.
+
+    :copyright: (c) 2012 by Roman Haritonov.
+    :license: BSD, see LICENSE.txt for more details.
+"""
 import array
 import operator
-import collections
-import pickle
-import win32com
-import types
+import math
 
-from win32com.client import VARIANT
-from pythoncom import VT_VARIANT
-import pythoncom
-
-def POINT(x,y,z):
-   return win32com.client.VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_R8,
-(x,y,z))
-
-def point(*args):
-    lst = [0.]*3
-    if len(args) < 3:
-        lst[0:2] = [float(x) for x in args[0:2]]
-    else:
-        lst = [float(x) for x in args[0:3]]
-    return VARIANT(VT_VARIANT, array.array("d",lst))
 
 class APoint(array.array):
     """ 3D point with basic geometric operations and support for passing as a
@@ -159,68 +151,37 @@ class APoint(array.array):
         return tuple(self) == tuple(other)
 
 
-def variant(data):
-    return VARIANT(VT_VARIANT, data)
+def distance(p1, p2):
+    """ Returns distance between two points `p1` and `p2`
+    """
+    return math.sqrt((p1[0] - p2[0]) ** 2 +
+                     (p1[1] - p2[1]) ** 2 +
+                     (p1[2] - p2[2]) ** 2)
 
-def vararr(*data):
-    if (  len(data) == 1 and 
-          isinstance(data, collections.Iterable) ):
-        data = data[0]
-    return map(variant, data)
+
+# next functions can accept parameters as aDouble(1, 2, 3)
+# or as list or tuple aDouble([1, 2, 3])
+def aDouble(*seq):
+    """ Returns :class:`array.array` of doubles ('d' code) for passing to AutoCAD
+
+    For 3D points use :class:`APoint` instead.
+    """
+    return _sequence_to_comtypes('d', *seq)
+
+
+def aInt(*seq):
+    """ Returns :class:`array.array` of ints ('l' code) for passing to AutoCAD
+    """
+    return _sequence_to_comtypes('l', *seq)
+
+
+def aShort(*seq):
+    """ Returns :class:`array.array` of shorts ('h' code) for passing to AutoCAD
+    """
+    return _sequence_to_comtypes('h', *seq)
+
 
 def _sequence_to_comtypes(typecode='d', *sequence):
     if len(sequence) == 1:
         return array.array(typecode, sequence[0])
     return array.array(typecode, sequence)
-
-def main():
-    test2()
-
-
-def test1():
-    #Test1: mesh testing
-
-    acad = Autocad()
-    acad.prompt("Hello, Autocad from Python\n")
-    print acad.doc.Name
-
-    p1 = APoint(0, 0)
-    p2 = APoint(50, 25)
-    for i in range(5):
-        text = acad.model.AddText('Hi %s!' % i, p1, 2.5)
-        acad.model.AddLine(p1, p2)
-        acad.model.AddCircle(p1, 10)
-        p1.y += 10
-
-    dp = APoint(10, 0)
-    for text in acad.iter_objects('Text'):
-        print('text: %s at: %s' % (text.TextString, text.InsertionPoint))
-        text.InsertionPoint = APoint(text.InsertionPoint) + dp
-
-    for obj in acad.iter_objects(['Circle', 'Line']):
-        print(obj.ObjectName)
-
-def test2():
-    #Test2: Direct AutoCAD COM
-    p3 = POINT(20.00, 20.00, 0.00)
-    p2 = APoint(10,10,0)
-    appObj = win32com.client.Dispatch("AutoCAD.Application")  
-    docObj = appObj.ActiveDocument
-    modelSpaceObj = docObj.ModelSpace
-
-    p1 = _sequence_to_comtypes('d', 10, 10)
-    for i in range(5):
-        p1 = point(10,10)
-        modelSpaceObj.AddCircle(p3, 10)
-        #p1.y += 10
-
-    #dp = APoint(10, 0)
-    #for text in acad.iter_objects('Text'):
-    #    print('text: %s at: %s' % (text.TextString, text.InsertionPoint))
-    #    text.InsertionPoint = APoint(text.InsertionPoint) + dp
-    #
-    #for obj in acad.iter_objects(['Circle', 'Line']):
-    #    print(obj.ObjectName)
-
-if __name__ == '__main__':
-    main()
