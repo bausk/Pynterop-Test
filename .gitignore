@@ -229,3 +229,4 @@ Deleted/
 *.pyproj
 *.sln
 *.suo
+env/
