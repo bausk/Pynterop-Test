@@ -6,9 +6,15 @@ import pickle
 import win32com
 import types
 
+from win32com.client import DispatchWithEvents, Dispatch
+import msvcrt, pythoncom
+import time, sys
+import types
+ 
+import threading
+
 from win32com.client import VARIANT
 from pythoncom import VT_VARIANT
-import pythoncom
 
 def POINT(x,y,z):
    return win32com.client.VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_R8,
@@ -56,9 +62,18 @@ def test1():
         print(obj.ObjectName)
 
 def test2():
+
+    class AcadEvents:
+        pass
+        #def OnActivate(self):
+        #    print "workbook OnActivate"
+
     #Test2: Direct AutoCAD COM
     p3 = POINT(20.00, 20.00, 0.00)
-    appObj = win32com.client.Dispatch("AutoCAD.Application")  
+    #appObj = win32com.client.DispatchWithEvents("AutoCAD.Application")
+    appObj = win32com.client.gencache.EnsureDispatch("AutoCAD.Application")
+    appObj = win32com.client.DispatchWithEvents("AutoCAD.Application", AcadEvents)
+    events = win32com.client.getevents("AutoCAD.Application")
     docObj = appObj.ActiveDocument
     modelSpaceObj = docObj.ModelSpace
 
